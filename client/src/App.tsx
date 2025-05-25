@@ -17,7 +17,7 @@ import Footer from "@/components/layout/Footer";
 import SafetyForm from "@/pages/forms/safety-form";
 import PatientContextForm from "@/pages/forms/patient-context-form";
 import DischargeForm from "@/pages/forms/discharge-form";
-import { useState, useEffect, useContext } from "react";
+import { useState, useEffect, useContext, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { UserContext } from "@/lib/context";
 import { useToast } from "@/hooks/use-toast";
@@ -27,24 +27,39 @@ import { useToast } from "@/hooks/use-toast";
 function PatientSelector() {
   const { selectedPatientId, setSelectedPatientId } = useContext(UserContext);
   const [showSelector, setShowSelector] = useState(false);
+  const selectorRef = useRef<HTMLDivElement>(null);
+  
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (selectorRef.current && !selectorRef.current.contains(event.target as Node)) {
+        setShowSelector(false);
+      }
+    }
+    
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [selectorRef]);
   
   return (
-    <div className="flex items-center">
+    <div className="flex items-center relative" ref={selectorRef}>
       <Button 
         variant="outline" 
-        className="ml-4"
+        className="ml-1 sm:ml-4 text-xs sm:text-sm px-2 sm:px-4 py-1 sm:py-2"
         onClick={() => setShowSelector(!showSelector)}
       >
-        Patient {selectedPatientId} ▼
+        Patient {selectedPatientId} <span className="ml-1">▼</span>
       </Button>
       
       {showSelector && (
-        <div className="absolute mt-2 top-16 right-4 bg-white shadow-lg rounded-md p-2 border z-50">
-          <div className="py-1 font-medium px-2">Select Patient</div>
+        <div className="absolute mt-1 top-full right-0 bg-white shadow-lg rounded-md p-2 border z-50 w-40 sm:w-48 max-h-60 overflow-y-auto">
+          <div className="py-1 font-medium px-2 text-xs sm:text-sm">Select Patient</div>
           {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((id) => (
             <div 
               key={id}
-              className={`px-4 py-2 hover:bg-gray-100 cursor-pointer rounded ${selectedPatientId === id ? 'bg-primary/10 font-medium' : ''}`}
+              className={`px-3 py-1.5 text-xs sm:text-sm hover:bg-gray-100 cursor-pointer rounded ${selectedPatientId === id ? 'bg-primary/10 font-medium' : ''}`}
               onClick={() => {
                 setSelectedPatientId(id);
                 setShowSelector(false);
@@ -183,15 +198,16 @@ function AppRouter() {
         <div className="flex items-center ml-auto">
           {currentUser && <PatientSelector />}
           {currentUser ? (
-            <div className="ml-4 bg-white shadow rounded-md px-3 py-1.5 flex items-center">
-              <div className="mr-2">
-                <div className="font-medium text-sm">{currentUser.name}</div>
-                <div className="text-xs text-muted-foreground">{currentUser.role}</div>
+            <div className="ml-1 sm:ml-4 bg-white shadow rounded-md px-2 sm:px-3 py-1 sm:py-1.5 flex flex-col sm:flex-row items-center">
+              <div className="mr-0 sm:mr-2 mb-1 sm:mb-0 w-full sm:w-auto">
+                <div className="font-medium text-xs sm:text-sm truncate">{currentUser.name}</div>
+                <div className="text-[10px] sm:text-xs text-muted-foreground truncate">{currentUser.role}</div>
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-1 sm:gap-2 w-full sm:w-auto">
                 <Button 
                   variant="outline" 
                   size="sm"
+                  className="text-[10px] sm:text-xs h-6 sm:h-8 px-2 py-0 w-full sm:w-auto"
                   onClick={() => setIsLoginOpen(true)}
                 >
                   Switch
@@ -199,6 +215,7 @@ function AppRouter() {
                 <Button 
                   variant="destructive" 
                   size="sm"
+                  className="text-[10px] sm:text-xs h-6 sm:h-8 px-2 py-0 w-full sm:w-auto"
                   onClick={handleSignOut}
                 >
                   Sign Out
